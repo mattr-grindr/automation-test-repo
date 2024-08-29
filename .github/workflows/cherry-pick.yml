@@ -1,0 +1,45 @@
+name: Cherry-Pick to Master
+
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  cherry-pick:
+    runs-on: ubuntu-latest
+    if: github.event.label.name == 'CherryPickForRelease'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote set-url origin https://github-actions[bot]:${{ secrets.GITHUB_TOKEN }}@github.com/grindrllc/grindr-android.git
+
+      - name: Cherry-pick commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(jq -r .number < $GITHUB_EVENT_PATH)
+          COMMIT_HASH=$(gh pr view $PR_NUMBER --json commits --jq '.commits[-1].oid')
+          git checkout main
+          git pull origin main
+          git cherry-pick $COMMIT_HASH
+          git push origin main
+
+      - name: Create a PR comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            github.issues.createComment({
+              ...context.repo,
+              issue_number: prNumber,
+              body: `The commit has been cherry-picked to the main branch.`
+            });
