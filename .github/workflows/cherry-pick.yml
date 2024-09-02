@@ -57,18 +57,6 @@ jobs:
           title: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
           body: 'This PR cherry-picks commit from PR #${{ github.event.pull_request.number }} to the main branch.'
 
-      - name: Create a PR comment
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prNumber = github.event.pull_request.number;
-            github.issues.createComment({
-              ...context.repo,
-              issue_number: prNumber,
-              body: `The commit has been cherry-picked to the main branch.`
-            });
-
       - name: Create comment
         uses: peter-evans/create-or-update-comment@v4
         with:
