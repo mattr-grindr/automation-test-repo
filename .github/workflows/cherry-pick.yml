@@ -47,10 +47,9 @@ jobs:
           git push origin cherry-pick-$PR_NUMBER
 
       - name: Create a pull request to main
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: 'main'
           commit-message: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
           branch: 'cherry-pick-${{ github.event.pull_request.number }}'
           title: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
@@ -67,3 +66,11 @@ jobs:
               issue_number: prNumber,
               body: `The commit has been cherry-picked to the main branch.`
             });
+
+      - name: Create comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: "A cherry-pick PR has been created against the master branch: https://github.com/grindrllc/grindr-android/pulls/${{PR_NUMBER}}."
+          reactions: '+1'
