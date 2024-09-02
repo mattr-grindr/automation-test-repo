@@ -8,6 +8,8 @@ on:
 jobs:
   cherry-pick:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: github.event.label.name == 'CherryPickForRelease'
     steps:
       - name: Checkout repository
