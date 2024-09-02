@@ -47,6 +47,7 @@ jobs:
           git push origin cherry-pick-$PR_NUMBER
 
       - name: Create a pull request to main
+        id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,5 +73,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body: "A cherry-pick PR has been created against the master branch: https://github.com/grindrllc/grindr-android/pulls/${{PR_NUMBER}}."
+          body: "A cherry-pick PR has been created against the master branch: https://github.com/grindrllc/grindr-android/pulls/${{ steps.create-pr.outputs.pull-request-number }}"
           reactions: '+1'
