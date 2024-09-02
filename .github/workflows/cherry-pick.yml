@@ -23,7 +23,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git remote set-url origin "https://github-actions[bot]:$GITHUB_TOKEN@github.com/grindrllc/grindr-android.git"
 
       - name: Cherry-pick commit
         env:
@@ -32,6 +31,7 @@ jobs:
           export PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
           export PR_BRANCH=$(echo ${{ github.event.pull_request.head.ref }})
           export COMMIT_HASH=$(git rev-parse $PR_BRANCH)
+          git fetch --all
           git checkout main
           git pull origin main
           git checkout -b cherry-pick-$PR_NUMBER
