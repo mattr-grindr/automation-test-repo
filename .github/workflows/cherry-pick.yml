@@ -47,9 +47,10 @@ jobs:
           git push origin cherry-pick-$PR_NUMBER
 
       - name: Create a pull request to main
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          base: 'main'
           commit-message: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
           branch: 'cherry-pick-${{ github.event.pull_request.number }}'
           title: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
