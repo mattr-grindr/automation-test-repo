@@ -19,67 +19,25 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for all branches and tags
 
-      - name: Set up Git
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      # - name: Set up Git
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # run: |
+        #   git config --global user.name 'github-actions[bot]'
+        #   git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Cherry-pick commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          export PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
-          export PR_BRANCH=$(echo ${{ github.event.pull_request.head.ref }})
-          git fetch origin $PR_BRANCH:$PR_BRANCH
-          export COMMIT_HASH=$(git rev-parse $PR_BRANCH)
-          git checkout $PR_BRANCH
-          git checkout -b cherry-pick-$PR_NUMBER
-          
-          # Check if the commit is a merge commit
-          if [ $(git cat-file -p $COMMIT_HASH | grep -c ^parent) -gt 1 ]; then
-            echo "Merge commit detected, using -m option for cherry-pick."
-            git cherry-pick -m 1 $COMMIT_HASH || {
-              echo "Conflict detected. Attempting to resolve using 'theirs' strategy."
-              git merge --strategy-option=theirs
-              git add .
-              git cherry-pick --continue || {
-                echo "Automatic resolution failed. Skipping this commit."
-                git cherry-pick --abort
-                git checkout main
-              }
-            }
-          else
-            git cherry-pick -m 1 $COMMIT_HASH || {
-              echo "Conflict detected. Attempting to resolve using 'theirs' strategy."
-              git merge --strategy-option=theirs
-              git add .
-              git cherry-pick --continue || {
-                echo "Automatic resolution failed. Please handle conflicts and retry this workflow."
-                git cherry-pick --abort
-                exit 1
-              }
-            }
-          fi
-          
-          git push origin cherry-pick-$PR_NUMBER
-
-      - name: Create a pull request to main
-        id: create-pr
-        uses: peter-evans/create-pull-request@v5
+      - name: Cherry pick into release-v2.0
+        uses: carloscastrojumo/github-cherry-pick-action@v1.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: 'main'
-          commit-message: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
-          branch: 'cherry-pick-${{ github.event.pull_request.number }}'
-          title: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
-          body: 'This PR cherry-picks commit from PR #${{ github.event.pull_request.number }} to the main branch.'
+          branch: ${{github.event.pull_request.head.ref}}
+          labels: CherryPickForRelease
+          title: '[cherry-pick] {old_title}'
+          body: 'Cherry-pick #{old_pull_request_id} to main'
 
       - name: Create comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body: "A cherry-pick PR has been created against the master branch: https://github.com/grindrllc/grindr-android/pulls/${{ steps.create-pr.outputs.pull-request-number }}"
+          body: "A cherry-pick PR has been created against the master branch: ${{steps.new-issue.outputs.html_url}}"
           reactions: '+1'
