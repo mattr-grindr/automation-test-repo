@@ -13,7 +13,7 @@ jobs:
     if: github.event.label.name == 'CherryPickForRelease'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history for all branches and tags
 
@@ -29,12 +29,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_NUMBER=$(jq -r .number < $GITHUB_EVENT_PATH)
-          COMMIT_HASH=$(gh pr view $PR_NUMBER --json commits --jq '.commits[-1].oid')
+          export PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
+          export PR_BRANCH=$(echo ${{ github.event.pull_request.head.ref }})
+          export COMMIT_HASH=$(git rev-parse $PR_BRANCH)
           git checkout main
           git pull origin main
+          git checkout -b cherry-pick-$PR_NUMBER
           git cherry-pick $COMMIT_HASH
-          git push origin main
+          git push origin cherry-pick-$PR_NUMBER
+
+      - name: Create a pull request to main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
+          branch: 'cherry-pick-${{ github.event.pull_request.number }}'
+          title: 'Cherry-pick PR #${{ github.event.pull_request.number }} to main'
+          body: 'This PR cherry-picks commit from PR #${{ github.event.pull_request.number }} to the main branch.'
 
       - name: Create a PR comment
         uses: actions/github-script@v6
