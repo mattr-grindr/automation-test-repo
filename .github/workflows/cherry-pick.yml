@@ -34,8 +34,7 @@ jobs:
           export PR_BRANCH=$(echo ${{ github.event.pull_request.head.ref }})
           git fetch origin $PR_BRANCH:$PR_BRANCH
           export COMMIT_HASH=$(git rev-parse $PR_BRANCH)
-          git checkout main
-          git pull origin main
+          git checkout $PR_BRANCH
           git checkout -b cherry-pick-$PR_NUMBER
           
           # Check if the commit is a merge commit
